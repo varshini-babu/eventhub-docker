@@ -1,0 +1,40 @@
+# docker-compose.yml
+
+version: "3.8"
+
+services:
+  localhost:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: eventhub_db
+      MYSQL_USER: event
+      MYSQL_PASSWORD: admin
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+        - ./mysql_config/my.cnf:/etc/mysql/conf.d/my.cnf
+    ports:
+      - "3306:3306"
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/eventhub_db
+      SPRING_DATASOURCE_USERNAME: event
+      SPRING_DATASOURCE_PASSWORD: admin
+    ports:
+      - "8081:8081"
+    depends_on:
+      - localhost
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "80:80"
